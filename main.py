@@ -1,52 +1,72 @@
 import data
-import helpers
+from selenium import webdriver
+from selenium.webdriver.chrome.options import Options
+from pages import UrbanRoutesPage
 
 class TestUrbanRoutes:
+    driver = None
+    page = None
 
     @classmethod
     def setup_class(cls):
-        if helpers.is_url_reachable(data.URBAN_ROUTES_URL):
-            print("Conectado ao servidor Urban Routes")
-        else:
-            print("Não foi possível conectar ao Urban Routes. Verifique se o servidor está ligado e ainda em execução.")
+        chrome_options = Options()
+        chrome_options.set_capability("goog:loggingPrefs", {'performance': 'ALL'})
+        cls.driver = webdriver.Chrome(options=chrome_options)
+        cls.driver.maximize_window()
 
+        # O ÚNICO .get() do projeto fica aqui
+        cls.driver.get(data.URBAN_ROUTES_URL)
+        # Criamos a instância da página uma única vez
+        cls.page = UrbanRoutesPage(cls.driver)
+
+    @classmethod
+    def teardown_class(cls):
+        cls.driver.quit()
+
+    # ---------------------------
     def test_set_route(self):
-        # Adicionar em S8
-        print("função criada para definir a rota")
-        pass
+        self.driver.get(data.URBAN_ROUTES_URL)
+        page = UrbanRoutesPage(self.driver)
+        page.set_address(data.ADDRESS_FROM, data.ADDRESS_TO)
 
-    def test_select_plan(self):
-        # Adicionar em S8
-        print("função criada para selecionar plano")
-        pass
+    def test_select_comfort(self):
+        self.driver.get(data.URBAN_ROUTES_URL)
+        page = UrbanRoutesPage(self.driver)
+        page.set_address(data.ADDRESS_FROM, data.ADDRESS_TO)
+        page.select_comfort_tariff()
 
-    def test_fill_phone_number(self):
-        # Adicionar em S8
-        print("função criada para preencher telefone")
-        pass
 
-    def test_fill_card(self):
-        # Adicionar em S8
-        print("função criada para preencher cartão")
-        pass
+    def test_fill_phone(self):
+        # Não use self.driver.get aqui!
+        self.page.fill_phone_number(data.PHONE_NUMBER)
+        self.page.enter_sms_code()
 
-    def test_comment_for_driver(self):
-        # Adicionar em S8
-        print("função criada para comentário ao motorista")
-        pass
+    def test_add_card(self):
+        # O navegador já está na tela certa vindo do teste anterior
+        self.page.add_credit_card(data.CARD_NUMBER, data.CARD_CODE)
 
-    def test_order_blanket_and_handkerchiefs(self):
-        # Adicionar em S8
-        print("função criada para pedir cobertor e lenços")
-        pass
+    def test_message(self):
+        self.page.set_comment(data.MESSAGE_FOR_DRIVER)
 
-    def test_order_2_ice_creams(self):
-        # Adicionar em S8
-        for i in range(2):
-            # Adicionar em S8
-            pass
+    def test_blanket(self):
+        # Se você der .get() aqui, a tarifa Comfort some e o switch da manta some junto!
+        self.page.toggle_blanket_and_tissues()
 
-    def test_car_search_model_appears(self):
-        # Adicionar em S8
-        print("função criada para verificar modelo do carro")
-        pass
+    def test_ice_cream(self):
+        self.driver.get(data.URBAN_ROUTES_URL)
+        page = UrbanRoutesPage(self.driver)
+        page.set_address(data.ADDRESS_FROM, data.ADDRESS_TO)
+        page.select_comfort_tariff()
+        page.add_ice_creams(2)
+
+    def test_order_taxi(self):
+        self.driver.get(data.URBAN_ROUTES_URL)
+        page = UrbanRoutesPage(self.driver)
+        page.set_address(data.ADDRESS_FROM, data.ADDRESS_TO)
+        page.select_comfort_tariff()
+        page.fill_phone_number(data.PHONE_NUMBER)
+        page.add_credit_card(data.CARD_NUMBER, data.CARD_CODE)
+        page.set_comment(data.MESSAGE_FOR_DRIVER)
+        page.toggle_blanket_and_tissues()
+        page.add_ice_creams(2)
+        page.click_order_taxi()
